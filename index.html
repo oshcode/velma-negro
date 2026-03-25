@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>Velma & Negro's Adventures</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFE5F1 0%, #E0F4FF 50%, #FFF9E5 100%);
+            position: fixed;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100vw;
+            max-height: 100vh;
+            max-height: 100dvh;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <!-- Phaser 3 from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+
+    <!-- Game Configuration -->
+    <script src="src/config.js"></script>
+
+    <!-- Game Scenes -->
+    <script src="src/scenes/BootScene.js"></script>
+    <script src="src/scenes/MenuScene.js"></script>
+    <script src="src/scenes/GameScene.js"></script>
+    <script src="src/scenes/GameOverScene.js"></script>
+
+    <!-- Main Game -->
+    <script src="src/main.js"></script>
+
+    <script>
+        // Simple glitch effect for game events
+        window.addGlitchEffect = () => {
+            const container = document.getElementById('game-container');
+            container.style.animation = 'shake 0.3s';
+            setTimeout(() => {
+                container.style.animation = '';
+            }, 300);
+        };
+    </script>
+
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-3px, 3px); }
+            50% { transform: translate(3px, -3px); }
+            75% { transform: translate(-3px, -3px); }
+        }
+    </style>
+</body>
+</html>
