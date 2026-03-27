@@ -18,6 +18,11 @@ class GameScene extends Phaser.Scene {
         this.lastComboTime = 0;
         this.isPaused = false;
 
+        // Dynamic difficulty
+        this.currentMinSpawn = GameConfig.MIN_SPAWN_INTERVAL;
+        this.currentMaxSpawn = GameConfig.MAX_SPAWN_INTERVAL;
+        this.currentObstacleRatio = GameConfig.OBSTACLE_SPAWN_RATIO;
+
         // Setup world
         this.setupBackground();
         this.setupPlayer();
@@ -424,8 +429,10 @@ class GameScene extends Phaser.Scene {
     }
 
     jump() {
-        // Only jump if on ground
-        if (this.player.body.touching.down || this.player.y >= GameConfig.GROUND_Y - 50) {
+        const onGround = this.player.body.touching.down || this.player.y >= GameConfig.GROUND_Y - 50;
+
+        if (onGround) {
+            // Jump from ground
             soundManager.playJump();
             this.player.setVelocityY(GameConfig.JUMP_VELOCITY);
 
@@ -436,6 +443,10 @@ class GameScene extends Phaser.Scene {
                 duration: 200,
                 yoyo: true
             });
+        } else {
+            // Fast fall when tapping in the air
+            this.player.setVelocityY(GameConfig.FAST_FALL_VELOCITY);
+            this.player.angle = 0;
         }
     }
 
@@ -443,8 +454,8 @@ class GameScene extends Phaser.Scene {
         if (this.isGameOver) return;
 
         const delay = Phaser.Math.Between(
-            GameConfig.MIN_SPAWN_INTERVAL,
-            GameConfig.MAX_SPAWN_INTERVAL
+            this.currentMinSpawn,
+            this.currentMaxSpawn
         );
 
         this.time.delayedCall(delay, () => {
@@ -455,7 +466,7 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObject() {
-        const isObstacle = Math.random() < GameConfig.OBSTACLE_SPAWN_RATIO;
+        const isObstacle = Math.random() < this.currentObstacleRatio;
 
         if (isObstacle) {
             this.spawnObstacle();
@@ -649,6 +660,20 @@ class GameScene extends Phaser.Scene {
             this.obstacleGroup.getChildren().forEach(obstacle => {
                 obstacle.body.setVelocityX(-this.gameSpeed);
             });
+        }
+
+        // Spawn obstacles more frequently over time
+        if (this.currentMinSpawn > GameConfig.MIN_SPAWN_INTERVAL_FLOOR) {
+            this.currentMinSpawn -= 80;
+            this.currentMaxSpawn -= 120;
+            this.currentMinSpawn = Math.max(this.currentMinSpawn, GameConfig.MIN_SPAWN_INTERVAL_FLOOR);
+            this.currentMaxSpawn = Math.max(this.currentMaxSpawn, GameConfig.MAX_SPAWN_INTERVAL_FLOOR);
+        }
+
+        // Increase obstacle ratio over time
+        if (this.currentObstacleRatio < GameConfig.MAX_OBSTACLE_RATIO) {
+            this.currentObstacleRatio += 0.03;
+            this.currentObstacleRatio = Math.min(this.currentObstacleRatio, GameConfig.MAX_OBSTACLE_RATIO);
         }
     }
 

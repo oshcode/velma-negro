@@ -12,6 +12,7 @@ const GameConfig = {
     // Physics
     GRAVITY: 1100,
     JUMP_VELOCITY: -600,
+    FAST_FALL_VELOCITY: 800,
     GROUND_Y: Math.round(_dynamicHeight * 0.838),
 
     // Character
@@ -24,10 +25,14 @@ const GameConfig = {
     SPEED_INCREASE_AMOUNT: 20,
     MAX_SPEED: 450,
 
-    // Spawning
+    // Spawning (initial values — these get harder over time)
     MIN_SPAWN_INTERVAL: 1200,
     MAX_SPAWN_INTERVAL: 2200,
-    OBSTACLE_SPAWN_RATIO: 0.5,
+    OBSTACLE_SPAWN_RATIO: 0.4,
+    // Difficulty caps
+    MIN_SPAWN_INTERVAL_FLOOR: 400,
+    MAX_SPAWN_INTERVAL_FLOOR: 800,
+    MAX_OBSTACLE_RATIO: 0.75,
 
     // Combo system
     COMBO_TIMEOUT: 3000,
