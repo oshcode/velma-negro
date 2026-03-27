@@ -8,6 +8,10 @@ class MenuScene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
+        // Init and start menu music
+        soundManager.init();
+        soundManager.startMusic('menu');
+
         // Bright gradient background
         this.add.rectangle(0, 0, width, height, 0xFFE5F1).setOrigin(0, 0);
 
@@ -19,27 +23,27 @@ class MenuScene extends Phaser.Scene {
 
         // Fun colorful title
         const title1 = this.add.text(width / 2, 70, "VELMA & NEGRO'S", {
-            fontSize: '20px',
+            fontSize: '30px',
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold',
             fill: '#FF69B4',
             stroke: '#FFFFFF',
-            strokeThickness: 4
+            strokeThickness: 5
         }).setOrigin(0.5);
 
-        const title2 = this.add.text(width / 2, 100, 'ADVENTURES', {
-            fontSize: '24px',
+        const title2 = this.add.text(width / 2, 110, 'ADVENTURES', {
+            fontSize: '36px',
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold',
             fill: '#00E5FF',
             stroke: '#FFFFFF',
-            strokeThickness: 4
+            strokeThickness: 5
         }).setOrigin(0.5);
 
         // Bounce animation
         this.tweens.add({
             targets: title1,
-            y: 67,
+            y: 68,
             duration: 1000,
             yoyo: true,
             repeat: -1,
@@ -48,7 +52,7 @@ class MenuScene extends Phaser.Scene {
 
         this.tweens.add({
             targets: title2,
-            y: 103,
+            y: 108,
             duration: 1200,
             yoyo: true,
             repeat: -1,
@@ -103,6 +107,7 @@ class MenuScene extends Phaser.Scene {
 
         // Selection logic
         velmaSprite.on('pointerdown', () => {
+            soundManager.playButtonClick();
             this.selectedCharacter = 'dog';
             velmaBorder.setStrokeStyle(5, 0xFF69B4, 1);
             velmaText.setFill('#FF69B4');
@@ -120,10 +125,11 @@ class MenuScene extends Phaser.Scene {
         });
 
         negroSprite.on('pointerdown', () => {
+            soundManager.playButtonClick();
             this.selectedCharacter = 'cat';
             negroBorder.setStrokeStyle(5, 0x00E5FF, 1);
             negroText.setFill('#00E5FF');
-            velmaBorder.setStrokeStyle(4, 0xFF69B4, 1);
+            velmaBorder.setStrokeStyle(3, 0x999999, 1);
             velmaText.setFill('#999999');
 
             // Bounce effect
@@ -181,6 +187,8 @@ class MenuScene extends Phaser.Scene {
         });
 
         startButton.on('pointerdown', () => {
+            soundManager.playButtonClick();
+            soundManager.stopMusic();
             this.cameras.main.flash(300, 255, 255, 255);
             this.time.delayedCall(300, () => {
                 this.scene.start('GameScene', { character: this.selectedCharacter });

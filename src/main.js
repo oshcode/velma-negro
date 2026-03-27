@@ -19,10 +19,14 @@ const config = {
         GameOverScene
     ],
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.ENVELOP,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: GameConfig.WIDTH,
-        height: GameConfig.HEIGHT
+        height: GameConfig.HEIGHT,
+        min: {
+            width: GameConfig.WIDTH,
+            height: GameConfig.HEIGHT
+        }
     }
 };
 

@@ -25,16 +25,12 @@ class GameScene extends Phaser.Scene {
         this.setupGroups();
         this.setupControls();
 
-        // Start spawning
-        this.scheduleNextSpawn();
+        // Start game music
+        soundManager.startMusic('game');
 
-        // Combo timeout checker
-        this.time.addEvent({
-            delay: 100,
-            callback: this.checkComboTimeout,
-            callbackScope: this,
-            loop: true
-        });
+        // Start spawning
+        this.isGameOver = false;
+        this.scheduleNextSpawn();
 
         // Difficulty scaling
         this.time.addEvent({
@@ -273,7 +269,10 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        menuButton.on('pointerdown', () => this.showPauseMenu());
+        menuButton.on('pointerdown', (pointer) => {
+            pointer.wasHandledByUI = true;
+            this.showPauseMenu();
+        });
         menuButton.on('pointerover', () => {
             menuButton.setFillStyle(0xB865FF);
             menuText.setFill('#FFFFFF');
@@ -326,7 +325,7 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5);
         this.pauseMenu.add([resumeBtn, resumeText]);
 
-        resumeBtn.on('pointerdown', () => this.hidePauseMenu());
+        resumeBtn.on('pointerdown', () => { soundManager.playButtonClick(); this.hidePauseMenu(); });
         resumeBtn.on('pointerover', () => {
             resumeBtn.setFillStyle(0x00E5FF);
             resumeBtn.setScale(1.05);
@@ -349,6 +348,8 @@ class GameScene extends Phaser.Scene {
         this.pauseMenu.add([retryBtn, retryText]);
 
         retryBtn.on('pointerdown', () => {
+            soundManager.playButtonClick();
+            soundManager.stopMusic();
             this.scene.restart();
         });
         retryBtn.on('pointerover', () => {
@@ -373,6 +374,8 @@ class GameScene extends Phaser.Scene {
         this.pauseMenu.add([mainMenuBtn, mainMenuText]);
 
         mainMenuBtn.on('pointerdown', () => {
+            soundManager.playButtonClick();
+            soundManager.stopMusic();
             this.scene.start('MenuScene');
         });
         mainMenuBtn.on('pointerover', () => {
@@ -405,9 +408,9 @@ class GameScene extends Phaser.Scene {
             if (!this.isPaused) this.jump();
         });
 
-        // Click/tap to jump
-        this.input.on('pointerdown', () => {
-            if (!this.isPaused) this.jump();
+        // Click/tap to jump (only if not on a UI element)
+        this.input.on('pointerdown', (pointer) => {
+            if (!this.isPaused && !pointer.wasHandledByUI) this.jump();
         });
 
         // ESC to toggle pause menu
@@ -423,6 +426,7 @@ class GameScene extends Phaser.Scene {
     jump() {
         // Only jump if on ground
         if (this.player.body.touching.down || this.player.y >= GameConfig.GROUND_Y - 50) {
+            soundManager.playJump();
             this.player.setVelocityY(GameConfig.JUMP_VELOCITY);
 
             // Rotate during jump
@@ -436,12 +440,15 @@ class GameScene extends Phaser.Scene {
     }
 
     scheduleNextSpawn() {
+        if (this.isGameOver) return;
+
         const delay = Phaser.Math.Between(
             GameConfig.MIN_SPAWN_INTERVAL,
             GameConfig.MAX_SPAWN_INTERVAL
         );
 
         this.time.delayedCall(delay, () => {
+            if (this.isGameOver) return;
             this.spawnObject();
             this.scheduleNextSpawn();
         });
@@ -536,6 +543,8 @@ class GameScene extends Phaser.Scene {
     }
 
     collectFood(player, food) {
+        soundManager.playCollect();
+
         // Add points with combo multiplier
         const points = food.pointValue * this.combo;
         this.score += points;
@@ -557,6 +566,7 @@ class GameScene extends Phaser.Scene {
             const color = colors[this.combo - 2] || colors[4];
             this.comboText.setFill(color);
             this.comboText.setStroke('#FFFFFF', 4);
+            soundManager.playCombo();
 
             // Fun bounce animation
             this.tweens.add({
@@ -581,6 +591,7 @@ class GameScene extends Phaser.Scene {
 
     hitObstacle(player, obstacle) {
         if (this.isInvincible) return;
+        soundManager.playHit();
 
         // Lose a life
         this.lives--;
@@ -627,20 +638,25 @@ class GameScene extends Phaser.Scene {
         this.livesText.setText(hearts + emptyHearts);
     }
 
-    checkComboTimeout() {
-        if (this.combo > 1 && this.time.now - this.lastComboTime > GameConfig.COMBO_TIMEOUT) {
-            this.combo = 1;
-            this.comboText.setVisible(false);
-        }
-    }
-
     increaseDifficulty() {
         if (this.gameSpeed < GameConfig.MAX_SPEED) {
             this.gameSpeed += GameConfig.SPEED_INCREASE_AMOUNT;
+
+            // Update velocity of existing objects to match new speed
+            this.foodGroup.getChildren().forEach(food => {
+                food.body.setVelocityX(-this.gameSpeed);
+            });
+            this.obstacleGroup.getChildren().forEach(obstacle => {
+                obstacle.body.setVelocityX(-this.gameSpeed);
+            });
         }
     }
 
     gameOver() {
+        this.isGameOver = true;
+        soundManager.stopMusic();
+        soundManager.playGameOver();
+
         // Save high score
         const highScore = localStorage.getItem('highScore') || 0;
         if (this.score > highScore) {
@@ -664,15 +680,15 @@ class GameScene extends Phaser.Scene {
         this.dirtTiles.tilePositionX += this.gameSpeed / 60;   // Dirt path (same speed as ground)
         this.groundTiles.tilePositionX += this.gameSpeed / 60; // Fastest (ground close to player)
 
-        // Scroll grass decorations
-        this.grassGroup.children.entries.forEach(grass => {
+        // Scroll grass decorations (iterate backwards for safe removal)
+        const grassChildren = this.grassGroup.getChildren();
+        for (let i = grassChildren.length - 1; i >= 0; i--) {
+            const grass = grassChildren[i];
             grass.x -= this.gameSpeed / 60;
-
-            // Remove off-screen grass
             if (grass.x < -50) {
                 grass.destroy();
             }
-        });
+        }
 
         // Spawn new grass periodically
         if (this.time.now - this.lastGrassSpawn > 400) {
@@ -688,17 +704,21 @@ class GameScene extends Phaser.Scene {
             this.player.setVelocityY(0);
         }
 
-        // Clean up off-screen objects
-        this.foodGroup.children.entries.forEach(food => {
-            if (food.x < -50) {
-                food.destroy();
-            }
-        });
+        // Check combo timeout (replaces separate 100ms timer)
+        if (this.combo > 1 && this.time.now - this.lastComboTime > GameConfig.COMBO_TIMEOUT) {
+            this.combo = 1;
+            this.comboText.setVisible(false);
+        }
 
-        this.obstacleGroup.children.entries.forEach(obstacle => {
-            if (obstacle.x < -50) {
-                obstacle.destroy();
-            }
-        });
+        // Clean up off-screen objects (iterate backwards for safe removal)
+        const foods = this.foodGroup.getChildren();
+        for (let i = foods.length - 1; i >= 0; i--) {
+            if (foods[i].x < -50) foods[i].destroy();
+        }
+
+        const obstacles = this.obstacleGroup.getChildren();
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            if (obstacles[i].x < -50) obstacles[i].destroy();
+        }
     }
 }

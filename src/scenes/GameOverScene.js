@@ -76,23 +76,25 @@ class GameOverScene extends Phaser.Scene {
             strokeThickness: 5
         }).setOrigin(0.5);
 
-        // Animate score counting up
+        // Animate score counting up using Phaser timer (safe on scene switch)
         let displayScore = 0;
-        const scoreInterval = setInterval(() => {
-            if (displayScore < this.finalScore) {
-                displayScore += Math.ceil(this.finalScore / 30);
+        const increment = Math.max(1, Math.ceil(this.finalScore / 30));
+        this.time.addEvent({
+            delay: 30,
+            repeat: Math.min(30, this.finalScore),
+            callback: () => {
+                displayScore += increment;
                 if (displayScore > this.finalScore) displayScore = this.finalScore;
                 scoreDisplay.setText(displayScore.toString());
-            } else {
-                clearInterval(scoreInterval);
             }
-        }, 30);
+        });
 
         // High score comparison
         const highScore = localStorage.getItem('highScore') || 0;
         const isNewHighScore = this.finalScore >= highScore;
 
         if (isNewHighScore && this.finalScore > 0) {
+            soundManager.playNewHighScore();
             const newHighText = this.add.text(width / 2, 350, '🎉 NEW HIGH SCORE! 🎉', {
                 fontSize: '18px',
                 fontFamily: 'Arial, sans-serif',
@@ -158,6 +160,7 @@ class GameOverScene extends Phaser.Scene {
         });
 
         playAgainBtn.on('pointerdown', () => {
+            soundManager.playButtonClick();
             this.cameras.main.flash(300, 255, 255, 255);
             this.time.delayedCall(300, () => {
                 this.scene.start('GameScene', { character: this.character });
@@ -188,6 +191,7 @@ class GameOverScene extends Phaser.Scene {
         });
 
         menuBtn.on('pointerdown', () => {
+            soundManager.playButtonClick();
             this.cameras.main.flash(300, 255, 255, 255);
             this.time.delayedCall(300, () => {
                 this.scene.start('MenuScene');
