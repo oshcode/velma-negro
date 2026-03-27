@@ -57,7 +57,7 @@ class GameScene extends Phaser.Scene {
 
         // Park/trees layer (medium parallax)
         this.parkTiles = this.add.tileSprite(
-            0, height - 350,
+            0, GameConfig.GROUND_Y - 310,
             width * 2, 256,
             'park'
         ).setOrigin(0, 0).setScale(1.4);

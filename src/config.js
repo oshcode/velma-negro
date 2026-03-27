@@ -1,13 +1,18 @@
 // Game Configuration and Constants
+// Dynamically size game to match device aspect ratio (base width 375)
+const _baseWidth = 375;
+const _aspect = window.innerHeight / window.innerWidth;
+const _dynamicHeight = Math.round(_baseWidth * _aspect);
+
 const GameConfig = {
-    // Game dimensions (iPhone portrait)
-    WIDTH: 375,
-    HEIGHT: 812,
+    // Game dimensions (adapts to device aspect ratio)
+    WIDTH: _baseWidth,
+    HEIGHT: _dynamicHeight,
 
     // Physics
     GRAVITY: 1100,
     JUMP_VELOCITY: -600,
-    GROUND_Y: 680,
+    GROUND_Y: Math.round(_dynamicHeight * 0.838),
 
     // Character
     PLAYER_X: 80,
